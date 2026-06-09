@@ -1,0 +1,70 @@
+name: Step 0 # Iniciar Exercício construir-aplicacoes-com-modo-agent-GHCP
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  actions: write
+  issues: write
+
+env:
+  STEP_1_FILE: ".github/steps/1-preparing.md"
+
+jobs:
+  start_exercise:
+    if: |
+      !github.event.repository.is_template
+    name: Iniciar Exercício
+    uses: skills/exercise-toolkit/.github/workflows/start-exercise.yml@v0.7.0
+    with:
+      exercise-title: "Construa Aplicações com Modo Agent do GitHub Copilot"
+      intro-message: |
+        "Bem-vindo ao empolgante mundo do modo agent do GitHub Copilot! 🚀
+        Neste exercício, você desbloqueará o potencial deste assistente de
+        codificação alimentado por IA para acelerar seu processo de desenvolvimento.
+        Vamos mergulhar e nos divertir explorando o futuro da codificação juntos! 💻✨"
+
+  post_next_step_content:
+    name: Postar conteúdo da próxima etapa
+    runs-on: ubuntu-latest
+    needs: [start_exercise]
+    env:
+      ISSUE_NUMBER: ${{ needs.start_exercise.outputs.issue-number }}
+      ISSUE_REPOSITORY: ${{ github.repository }}
+
+    steps:
+      - name: Fazer Checkout
+        uses: actions/checkout@v4
+
+      - name: Obter templates de resposta
+        uses: actions/checkout@v4
+        with:
+          repository: skills/exercise-toolkit
+          path: exercise-toolkit
+          ref: v0.7.0
+
+      - name: Criar comentário - adicionar conteúdo da etapa
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          file: ${{ env.STEP_1_FILE }}
+          vars: |
+            login: ${{ github.actor }}
+            full_repo_name: ${{ github.repository }}
+
+      - name: Criar comentário - observando progresso
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          file: exercise-toolkit/markdown-templates/step-feedback/watching-for-progress.md
+
+      - name: Habilitar workflow da próxima etapa
+        run: |
+          gh workflow enable "Step 1"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
